@@ -248,19 +248,37 @@
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
 
+        // ПОЛЬЗОВАТЕЛЬСКИЙ ID
         const userId = tg.initDataUnsafe?.user?.id || 'guest';
+
+        // ХРАНИЛИЩЕ ПО user.id
         const DB = {
             get(key) { return JSON.parse(localStorage.getItem(`tgcoin_${userId}_${key}`) || 'null'); },
             set(key, value) { localStorage.setItem(`tgcoin_${userId}_${key}`, JSON.stringify(value)); }
         };
 
-        let game = DB.get('game') || { coins: 0, auto: 0, energy: 100, maxEnergy: 100, boost: 1, referrals: 0, totalTaps: 0, lastAd: 0 };
-        const upgrades = DB.get('upgrades') || { auto: 0, energy: 0, boost: 0 };
-        const baseCosts = { auto: 100, energy: 500, boost: 2000 };
+        // ИГРОВЫЕ ДАННЫЕ
+        let game = DB.get('game') || {
+            coins: 0,
+            auto: 0,
+            energy: 100,
+            maxEnergy: 100,
+            boost: 1,
+            referrals: 0,
+            totalTaps: 0,
+            lastAd: 0
+        };
+        const upgrades = DB.get('upgrades') || { auto: 0 };
+        const baseCosts = { auto: 100 };
         const tapSound = document.getElementById('tapSound');
 
-        function save() { DB.set('game', game); DB.set('upgrades', upgrades); }
+        // СОХРАНЕНИЕ
+        function save() {
+            DB.set('game', game);
+            DB.set('upgrades', upgrades);
+        }
 
+        // ТАП
         function tapCoin() {
             if (game.energy <= 0) return;
             game.coins += game.boost;
@@ -269,6 +287,7 @@
             tapSound.currentTime = 0; tapSound.play();
             showTapEffect(`+${game.boost}`);
             updateAll();
+            save();
         }
 
         function showTapEffect(text) {
@@ -280,6 +299,7 @@
             setTimeout(() => el.remove(), 1000);
         }
 
+        // ПОКУПКА
         function buy(type) {
             const level = upgrades[type];
             const cost = baseCosts[type] * Math.pow(1.8, level);
@@ -287,25 +307,30 @@
                 game.coins -= cost;
                 upgrades[type]++;
                 if (type === 'auto') game.auto = upgrades.auto;
-                if (type === 'energy') { game.maxEnergy += 100; game.energy = game.maxEnergy; }
-                if (type === 'boost') game.boost *= 2;
                 updateAll();
+                save();
             }
         }
 
-        // КНОПКА "ПРИГЛАСИТЬ" — ОТПРАВЛЯЕТ invite В БОТ
+        // ПРИГЛАСИТЬ
         function invite() {
             tg.sendData('invite');
             tg.showAlert('Реферальная ссылка отправлена в чат с ботом!');
         }
 
+        // РЕКЛАМА
         function watchAd() {
             const now = Date.now();
-            if (now - game.lastAd < 120000) { updateTimer(); return; }
+            if (now - game.lastAd < 120000) {
+                updateTimer();
+                return;
+            }
             game.coins += 500;
             game.lastAd = now;
             alert('+500 TG Coin!');
-            updateAll(); updateTimer();
+            updateAll();
+            save();
+            updateTimer();
         }
 
         function updateTimer() {
@@ -314,14 +339,18 @@
             if (diff > 0) el.textContent = `Реклама через ${Math.ceil(diff/1000)} сек`;
             else el.textContent = '';
         }
-        setInterval(updateTimer, 1000);
 
+        // АВТО-НАЧИСЛЕНИЕ
         setInterval(() => {
             game.coins += game.auto;
             game.energy = Math.min(game.maxEnergy, game.energy + 0.5);
             updateAll();
+            save();
         }, 1000);
 
+        setInterval(updateTimer, 1000);
+
+        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
         function updateAll() {
             document.getElementById('coins').textContent = Math.floor(game.coins).toLocaleString();
             document.getElementById('auto').textContent = game.auto.toFixed(1);
@@ -329,14 +358,10 @@
             document.getElementById('maxEnergy').textContent = game.maxEnergy;
             document.getElementById('referrals').textContent = game.referrals;
 
-            ['auto','energy','boost'].forEach(t => {
-                const btn = document.getElementById(t + 'Btn');
-                if (btn) {
-                    const cost = baseCosts[t] * Math.pow(1.8, upgrades[t]);
-                    btn.textContent = cost.toLocaleString() + ' TG';
-                    btn.disabled = game.coins < cost;
-                }
-            });
+            const autoBtn = document.getElementById('autoBtn');
+            const cost = baseCosts.auto * Math.pow(1.8, upgrades.auto);
+            autoBtn.textContent = cost.toLocaleString() + ' TG';
+            autoBtn.disabled = game.coins < cost;
         }
 
         function openTab(tab) {
@@ -354,10 +379,16 @@
             `;
         }
 
+        // ТАБЫ
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => openTab(btn.dataset.tab));
         });
 
+        // СОХРАНЕНИЕ ПРИ ЗАКРЫТИИ
+        window.addEventListener('beforeunload', save);
+        window.addEventListener('pagehide', save);
+
+        // ИНИЦИАЛИЗАЦИЯ
         updateAll();
         updateTop();
         updateTimer();
