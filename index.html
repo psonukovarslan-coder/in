@@ -134,12 +134,8 @@
             color: #000;
         }
 
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         .upgrade {
             background: rgba(0,212,255,0.1);
@@ -150,7 +146,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: 0.2s;
         }
         .upgrade button {
             background: var(--accent);
@@ -167,21 +162,6 @@
             cursor: not-allowed;
         }
 
-        .list {
-            max-height: 180px;
-            overflow-y: auto;
-            padding-right: 8px;
-        }
-        .list-item {
-            background: rgba(255,255,255,0.05);
-            margin: 6px 0;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-        }
-
         #ad-section {
             text-align: center;
             margin-top: 16px;
@@ -196,7 +176,6 @@
             width: 100%;
             border: none;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(255,204,0,0.3);
         }
         #ad-timer {
             font-size: 13px;
@@ -208,14 +187,11 @@
             #coin { width: 140px; height: 140px; }
             .stats { min-width: 240px; font-size: 14px; }
         }
-
         @media (min-width: 768px) {
             main { padding: 24px; padding-bottom: 140px; }
             #coin { width: 200px; height: 200px; }
             .stats { min-width: 320px; }
-            .menu { max-width: 600px; margin: 0 auto; }
         }
-
         @media (orientation: landscape) and (max-width: 767px) {
             main { flex-direction: row; justify-content: center; }
             .stats { margin-left: 16px; }
@@ -224,7 +200,7 @@
     </style>
 </head>
 <body>
-    <header>TG Coin — <span id="nickname">...</span></header>
+    <header>TG Coin</header>
 
     <main>
         <div id="coin-container">
@@ -232,10 +208,10 @@
         </div>
 
         <div class="stats">
-            <div class="stat"><i class="fas fa-coins"></i> TG Coin: <span class="value" id="coins">0</span></div>
-            <div class="stat"><i class="fas fa-robot"></i> Авто/сек: <span class="value" id="auto">0</span></div>
-            <div class="stat"><i class="fas fa-bolt"></i> Энергия: <span class="value" id="energy">100</span>/<span id="maxEnergy">100</span></div>
-            <div class="stat"><i class="fas fa-users"></i> Рефералы: <span class="value" id="referrals">0</span></div>
+            <div class="stat">TG Coin: <span class="value" id="coins">0</span></div>
+            <div class="stat">Авто/сек: <span class="value" id="auto">0</span></div>
+            <div class="stat">Энергия: <span class="value" id="energy">100</span>/<span id="maxEnergy">100</span></div>
+            <div class="stat">Рефералы: <span class="value" id="referrals">0</span></div>
         </div>
     </main>
 
@@ -243,40 +219,23 @@
         <div class="tabs">
             <button class="tab-btn active" data-tab="upgrades">УЛУЧШЕНИЯ</button>
             <button class="tab-btn" data-tab="top">ТОП</button>
-            <button class="tab-btn" data-tab="achievements">ДОСТИЖЕНИЯ</button>
         </div>
 
-        <!-- УЛУЧШЕНИЯ -->
         <div id="upgrades" class="tab-content active">
             <div class="upgrade">
                 <div><strong>Авто-кликер</strong><br><small>+1 TG/сек</small></div>
                 <button id="autoBtn" onclick="buy('auto')">100 TG</button>
             </div>
             <div class="upgrade">
-                <div><strong>Батарея</strong><br><small>+100 энергии</small></div>
-                <button id="energyBtn" onclick="buy('energy')">500 TG</button>
-            </div>
-            <div class="upgrade">
-                <div><strong>Буст ×2</strong><br><small>Навсегда</small></div>
-                <button id="boostBtn" onclick="buy('boost')">2000 TG</button>
-            </div>
-            <div class="upgrade">
                 <div><strong>Пригласить друга</strong><br><small>+200 TG +10% авто</small></div>
-                <button onclick="inviteFriend()">Пригласить</button>
+                <button onclick="invite()">Пригласить</button>
             </div>
         </div>
 
-        <!-- ТОП -->
         <div id="top" class="tab-content">
-            <div class="list" id="topList"></div>
+            <div class="list" id="topList">Загрузка...</div>
         </div>
 
-        <!-- ДОСТИЖЕНИЯ -->
-        <div id="achievements" class="tab-content">
-            <div class="list" id="achList"></div>
-        </div>
-
-        <!-- РЕКЛАМА -->
         <div id="ad-section">
             <button id="ad-btn" onclick="watchAd()">Смотреть рекламу (+500 TG)</button>
             <div id="ad-timer"></div>
@@ -286,63 +245,30 @@
     <audio id="tapSound" src="https://assets.mixkit.co/sfx/preview/mixkit-coin-win-notification-1939.mp3" preload="auto"></audio>
 
     <script>
-        // === TELEGRAM WEBAPP ===
         const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        tg.ready(); tg.expand();
 
         const userId = tg.initDataUnsafe?.user?.id || 'guest';
-        const username = tg.initDataUnsafe?.user?.username || 'Player';
-        document.getElementById('nickname').textContent = username;
-
-        // === БАЗА ПО USER.ID ===
         const DB = {
             get(key) { return JSON.parse(localStorage.getItem(`tgcoin_${userId}_${key}`) || 'null'); },
             set(key, value) { localStorage.setItem(`tgcoin_${userId}_${key}`, JSON.stringify(value)); }
         };
 
-        // === ИГРА ===
-        let game = DB.get('game') || {
-            coins: 0,
-            auto: 0,
-            energy: 100,
-            maxEnergy: 100,
-            boost: 1,
-            referrals: 0,
-            totalTaps: 0,
-            achievements: [],
-            lastAd: 0
-        };
-
+        let game = DB.get('game') || { coins: 0, auto: 0, energy: 100, maxEnergy: 100, boost: 1, referrals: 0, totalTaps: 0, lastAd: 0 };
         const upgrades = DB.get('upgrades') || { auto: 0, energy: 0, boost: 0 };
         const baseCosts = { auto: 100, energy: 500, boost: 2000 };
-
-        const achievementsList = [
-            { id: 'tap500', name: '500 тапов', reward: 1000, check: () => game.totalTaps >= 500 },
-            { id: 'coin10k', name: '10 000 TG', reward: 5000, check: () => game.coins >= 10000 },
-            { id: 'refer10', name: '10 рефералов', reward: 10000, check: () => game.referrals >= 10 }
-        ];
-
         const tapSound = document.getElementById('tapSound');
 
-        // === СОХРАНЕНИЕ ===
-        function save() {
-            DB.set('game', game);
-            DB.set('upgrades', upgrades);
-        }
+        function save() { DB.set('game', game); DB.set('upgrades', upgrades); }
 
-        // === ТАП ===
         function tapCoin() {
             if (game.energy <= 0) return;
-            const earned = game.boost;
-            game.coins += earned;
+            game.coins += game.boost;
             game.totalTaps++;
             game.energy--;
             tapSound.currentTime = 0; tapSound.play();
-            showTapEffect(`+${earned}`);
-            if ('vibrate' in navigator) navigator.vibrate(30);
+            showTapEffect(`+${game.boost}`);
             updateAll();
-            checkAchievements();
         }
 
         function showTapEffect(text) {
@@ -350,84 +276,66 @@
             el.className = 'tap-effect';
             el.textContent = text;
             el.style.left = `${50 + Math.random() * 60 - 30}%`;
-            el.style.top = '50%';
             document.getElementById('coin-container').appendChild(el);
             setTimeout(() => el.remove(), 1000);
         }
 
-        // === ПОКУПКИ ===
         function buy(type) {
             const level = upgrades[type];
             const cost = baseCosts[type] * Math.pow(1.8, level);
             if (game.coins >= cost) {
                 game.coins -= cost;
                 upgrades[type]++;
-                applyUpgrade(type);
+                if (type === 'auto') game.auto = upgrades.auto;
+                if (type === 'energy') { game.maxEnergy += 100; game.energy = game.maxEnergy; }
+                if (type === 'boost') game.boost *= 2;
                 updateAll();
             }
         }
 
-        function applyUpgrade(type) {
-            if (type === 'auto') game.auto = upgrades.auto;
-            if (type === 'energy') { game.maxEnergy += 100; game.energy = game.maxEnergy; }
-            if (type === 'boost') game.boost *= 2;
+        // КНОПКА "ПРИГЛАСИТЬ" — ОТПРАВЛЯЕТ invite В БОТ
+        function invite() {
+            tg.sendData('invite');
+            tg.showAlert('Реферальная ссылка отправлена в чат с ботом!');
         }
 
-        // === РЕФЕРАЛЫ ===
-        function inviteFriend() {
-            const botUsername = "@tg_coin_new_Bot"; // ← ЗАМЕНИ НА СВОЙ @username
-            const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
-            tg.openTelegramLink(refLink);
-            tg.showPopup({ message: `Поделись ссылкой:\n${refLink}` });
-        }
-
-        // === РЕКЛАМА ===
         function watchAd() {
             const now = Date.now();
-            if (now - game.lastAd < 120000) {
-                updateTimer();
-                return;
-            }
+            if (now - game.lastAd < 120000) { updateTimer(); return; }
             game.coins += 500;
             game.lastAd = now;
-            alert('Реклама просмотрена! +500 TG Coin');
-            updateAll();
-            updateTimer();
+            alert('+500 TG Coin!');
+            updateAll(); updateTimer();
         }
 
         function updateTimer() {
-            const timerEl = document.getElementById('ad-timer');
-            const now = Date.now();
-            const diff = 120000 - (now - game.lastAd);
-            if (diff > 0) {
-                const sec = Math.ceil(diff / 1000);
-                timerEl.textContent = `Реклама доступна через ${sec} сек`;
-            } else {
-                timerEl.textContent = '';
-            }
+            const el = document.getElementById('ad-timer');
+            const diff = 120000 - (Date.now() - game.lastAd);
+            if (diff > 0) el.textContent = `Реклама через ${Math.ceil(diff/1000)} сек`;
+            else el.textContent = '';
         }
         setInterval(updateTimer, 1000);
 
-        // === АВТО + РЕГЕН ===
         setInterval(() => {
-            game.coins += game.auto * (1 + (game.referrals >= 5 ? 0.1 : 0));
+            game.coins += game.auto;
             game.energy = Math.min(game.maxEnergy, game.energy + 0.5);
             updateAll();
         }, 1000);
 
-        // === UI ===
         function updateAll() {
             document.getElementById('coins').textContent = Math.floor(game.coins).toLocaleString();
-            document.getElementById('auto').textContent = (game.auto * (1 + (game.referrals >= 5 ? 0.1 : 0))).toFixed(1);
+            document.getElementById('auto').textContent = game.auto.toFixed(1);
             document.getElementById('energy').textContent = Math.floor(game.energy);
             document.getElementById('maxEnergy').textContent = game.maxEnergy;
             document.getElementById('referrals').textContent = game.referrals;
 
-            ['auto', 'energy', 'boost'].forEach(t => {
+            ['auto','energy','boost'].forEach(t => {
                 const btn = document.getElementById(t + 'Btn');
-                const cost = baseCosts[t] * Math.pow(1.8, upgrades[t]);
-                btn.textContent = `${cost.toLocaleString()} TG`;
-                btn.disabled = game.coins < cost;
+                if (btn) {
+                    const cost = baseCosts[t] * Math.pow(1.8, upgrades[t]);
+                    btn.textContent = cost.toLocaleString() + ' TG';
+                    btn.disabled = game.coins < cost;
+                }
             });
         }
 
@@ -436,53 +344,22 @@
             document.getElementById(tab).classList.add('active');
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
-
             if (tab === 'top') updateTop();
-            if (tab === 'achievements') updateAchievements();
         }
 
         function updateTop() {
-            const list = document.getElementById('topList');
-            list.innerHTML = `
-                <div class="list-item"><strong>1. ${username}</strong> — ${Math.floor(game.coins).toLocaleString()} TG</div>
-                <div class="list-item">2. @crypto_king — 142,000 TG</div>
-                <div class="list-item">3. @miner_pro — 98,500 TG</div>
-                <div class="list-item">4. @ton_whale — 75,200 TG</div>
-                <div class="list-item">5. @tap_master — 62,100 TG</div>
+            document.getElementById('topList').innerHTML = `
+                <div class="list-item"><strong>1. Ты</strong> — ${Math.floor(game.coins).toLocaleString()} TG</div>
+                <div class="list-item">2. @pro_miner — 142,000 TG</div>
             `;
         }
 
-        function checkAchievements() {
-            achievementsList.forEach(a => {
-                if (!game.achievements.includes(a.id) && a.check()) {
-                    game.achievements.push(a.id);
-                    game.coins += a.reward;
-                    updateAchievements();
-                    updateAll();
-                }
-            });
-        }
-
-        function updateAchievements() {
-            const list = document.getElementById('achList');
-            list.innerHTML = achievementsList.map(a =>
-                `<div class="list-item">
-                    <div>${a.name}</div>
-                    <div style="color:${game.achievements.includes(a.id) ? '#0f0' : '#888'}">
-                        ${game.achievements.includes(a.id) ? 'Achieved +${a.reward}' : 'Locked'}
-                    </div>
-                </div>`
-            ).join('');
-        }
-
-        // === СТАРТ ===
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => openTab(btn.dataset.tab));
         });
 
         updateAll();
         updateTop();
-        updateAchievements();
         updateTimer();
         save();
     </script>
