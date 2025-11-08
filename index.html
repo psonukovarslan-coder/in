@@ -94,7 +94,7 @@
 
         const DB = { get: k => JSON.parse(localStorage.getItem(`tgcoin_${userId}_${k}`) || 'null'), set: (k,v) => localStorage.setItem(`tgcoin_${userId}_${k}`, JSON.stringify(v)) };
         let game = DB.get('game') || {c:0,a:0,e:100,m:100,b:1,r:0,l:0,t:0};
-        const upgrades = DB.get('upgrades') || {a:0};
+        const upgrades = DB.get('upgrades') || {auto: 0};
         let subDone = DB.get('sub') || false;
 
         function save() {
@@ -112,9 +112,11 @@
         }
 
         function buyAuto() {
-            const cost = 100 * Math.pow(1.8, upgrades.a);
+            const cost = 100 * Math.pow(1.8, upgrades.auto);
             if(game.c >= cost){
-                game.c -= cost; upgrades.a++; game.a = upgrades.a;
+                game.c -= cost;
+                upgrades.auto++;
+                game.a += 1;  // +1 TG/сек за каждую покупку
                 update();
             }
         }
@@ -158,7 +160,8 @@
             document.getElementById('energy').textContent = Math.floor(game.e);
             document.getElementById('max').textContent = game.m;
             document.getElementById('refs').textContent = game.r;
-            document.getElementById('autoBtn').textContent = Math.floor(100 * Math.pow(1.8, upgrades.a)) + ' TG';
+            const cost = 100 * Math.pow(1.8, upgrades.auto);
+            document.getElementById('autoBtn').textContent = cost.toLocaleString() + ' TG';
             save();
         }
 
@@ -173,7 +176,7 @@
             }
         }
 
-        // === ТОП-100 С АВТООБНОВЛЕНИЕМ ===
+        // === ОНЛАЙН ТОП-100 ===
         async function updateTop() {
             const topList = document.getElementById('topList');
             const yourPlace = document.getElementById('yourPlace');
