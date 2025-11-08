@@ -31,6 +31,8 @@
         .list-item { background: rgba(255,255,255,0.05); margin: 6px 0; padding: 10px; border-radius: 10px; font-size: 14px; }
         .your-place { font-style: italic; color: #aaa; margin-top: 10px; text-align: center; }
         .update-time { font-size: 12px; color: #666; text-align: center; margin-top: 8px; }
+        #ad-btn { background: #ffcc00; color: #000; font-weight: 700; }
+        #ad-timer { font-size: 13px; color: var(--warning); margin-top: 6px; text-align: center; }
     </style>
 </head>
 <body>
@@ -71,13 +73,16 @@
         </div>
 
         <div id="ach" class="tab-content">
-            <div class="ach" id="ach4">
+            <div class="ach" id="subAch">
                 Подписка на @dubna_book — +100 энергии<br>
-                <button onclick="checkSub()">Получить бонус</button>
+                <button onclick="checkSub()">Проверить подписку</button>
             </div>
         </div>
 
-        <button id="ad-btn" onclick="ad()">Реклама (+500)</button>
+        <div style="text-align: center; margin-top: 16px;">
+            <button id="ad-btn" onclick="watchAd()">Смотреть рекламу (+500 TG)</button>
+            <div id="ad-timer"></div>
+        </div>
     </div>
 
     <script>
@@ -100,38 +105,51 @@
         }
 
         function tap() {
-            if(game.e>0){
-                game.c+=game.b; game.e--;
+            if(game.e > 0){
+                game.c += game.b; game.e--;
                 update();
             }
         }
 
         function buyAuto() {
-            const cost = 100*Math.pow(1.8,upgrades.a);
-            if(game.c>=cost){ game.c-=cost; upgrades.a++; game.a=upgrades.a; update(); }
+            const cost = 100 * Math.pow(1.8, upgrades.a);
+            if(game.c >= cost){
+                game.c -= cost; upgrades.a++; game.a = upgrades.a;
+                update();
+            }
         }
 
-        function invite() { tg.sendData('invite'); tg.showAlert('Реферальная ссылка отправлена в чат!'); }
+        function invite() {
+            tg.sendData('invite');
+            tg.showAlert('Реферальная ссылка отправлена в чат!');
+        }
 
-        function ad() { if(Date.now()-game.l>120000){game.c+=500;game.l=Date.now();update();} }
-
-        function checkSub() {
-            if (subDone) {
-                tg.showAlert('Вы уже получили бонус за подписку!');
+        function watchAd() {
+            const now = Date.now();
+            if (now - game.l < 120000) {
+                updateTimer();
                 return;
             }
-            tg.openLink('https://t.me/dubna_book');
-            tg.showPopup({
-                title: "Подпишись на канал",
-                message: "После подписки нажми 'Я подписался'",
-                buttons: [{ type: "ok", text: "Я подписался" }]
-            }, () => {
-                subDone = true;
-                game.e = Math.min(game.m, game.e + 100);
-                update();
-                updateSubAchievement();
-                tg.showAlert('+100 энергии начислено!');
-            });
+            game.c += 500;
+            game.l = now;
+            tg.showAlert('+500 TG Coin!');
+            update();
+            updateTimer();
+        }
+
+        function updateTimer() {
+            const el = document.getElementById('ad-timer');
+            const diff = 120000 - (Date.now() - game.l);
+            if (diff > 0) {
+                el.textContent = `Реклама через ${Math.ceil(diff/1000)} сек`;
+            } else {
+                el.textContent = '';
+            }
+        }
+        setInterval(updateTimer, 1000);
+
+        function checkSub() {
+            tg.sendData('check_subscription');
         }
 
         function update() {
@@ -140,27 +158,27 @@
             document.getElementById('energy').textContent = Math.floor(game.e);
             document.getElementById('max').textContent = game.m;
             document.getElementById('refs').textContent = game.r;
-            document.getElementById('autoBtn').textContent = Math.floor(100*Math.pow(1.8,upgrades.a)) + ' TG';
+            document.getElementById('autoBtn').textContent = Math.floor(100 * Math.pow(1.8, upgrades.a)) + ' TG';
             save();
         }
 
-        function updateSubAchievement() {
-            const ach = document.getElementById('ach4');
+        function updateSub() {
+            const ach = document.getElementById('subAch');
             if (subDone) {
                 ach.innerHTML = 'Подписка на @dubna_book — +100 энергии<br><span style="color:#0f0">Выполнено</span>';
                 ach.classList.add('done');
             } else {
-                ach.innerHTML = 'Подписка на @dubna_book — +100 энергии<br><button onclick="checkSub()">Получить бонус</button>';
+                ach.innerHTML = 'Подписка на @dubna_book — +100 энергии<br><button onclick="checkSub()">Проверить подписку</button>';
                 ach.classList.remove('done');
             }
         }
 
-        // === АВТООБНОВЛЕНИЕ ТОП-100 КАЖДЫЕ 30 СЕКУНД ===
+        // === ТОП-100 С АВТООБНОВЛЕНИЕМ ===
         async function updateTop() {
             const topList = document.getElementById('topList');
             const yourPlace = document.getElementById('yourPlace');
             const updateTime = document.getElementById('updateTime');
-            topList.innerHTML = 'Загрузка топа...';
+            topList.innerHTML = 'Загрузка...';
 
             try {
                 const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://raw.githubusercontent.com/psonukovarslan-coder/in/main/top100.json'));
@@ -180,15 +198,12 @@
                     yourPlace.textContent = `Ты не в топ-100. Твои: ${Math.floor(game.c).toLocaleString()} TG`;
                 }
 
-                const now = new Date().toLocaleTimeString();
-                updateTime.textContent = `Обновлено: ${now}`;
-            } catch (e) {
-                topList.innerHTML = '<div class="list-item">Ошибка загрузки топа</div>';
-                updateTime.textContent = 'Ошибка сети';
+                updateTime.textContent = `Обновлено: ${new Date().toLocaleTimeString()}`;
+            } catch {
+                topList.innerHTML = '<div class="list-item">Ошибка загрузки</div>';
             }
         }
 
-        // Запуск автообновления
         setInterval(updateTop, 30000); // каждые 30 сек
 
         // === ТАБЫ ===
@@ -199,11 +214,11 @@
                 document.querySelectorAll('.tab-btn').forEach(bb => bb.classList.remove('active'));
                 b.classList.add('active');
                 if (b.dataset.tab === 'top') updateTop();
-                if (b.dataset.tab === 'ach') updateSubAchievement();
+                if (b.dataset.tab === 'ach') updateSub();
             });
         });
 
-        // Инициализация
+        // === АВТОДОХОД ===
         setInterval(() => {
             game.c += game.a * 0.1;
             game.e = Math.min(game.m, game.e + 0.5);
@@ -212,9 +227,11 @@
 
         window.addEventListener('beforeunload', save);
 
+        // Инициализация
         update();
-        updateSubAchievement();
-        updateTop(); // первый запуск
+        updateSub();
+        updateTop();
+        updateTimer();
     </script>
 </body>
 </html>
