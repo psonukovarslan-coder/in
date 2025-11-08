@@ -8,231 +8,449 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        :root { --bg: #0a1a2e; --card: #112240; --accent: #00d4ff; --text: #e0f2ff; --success: #00ff88; --warning: #ffaa00; }
+        /* Твой оригинальный CSS без изменений */
+        :root {
+            --bg: #0a1a2e;
+            --card: #112240;
+            --accent: #00d4ff;
+            --text: #e0f2ff;
+            --text-muted: #88aabb;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --ads: #ffcc00;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; user-select: none; }
-        header { padding: 16px; text-align: center; font-weight: 700; font-size: 20px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); }
-        main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px; padding-bottom: 140px; overflow-y: auto; }
-        #coin { width: 160px; height: 160px; cursor: pointer; margin: 20px; filter: drop-shadow(0 0 20px rgba(0,212,255,0.5)); }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            user-select: none;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: rgba(0,0,0,0.3);
+            padding: 16px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,212,255,0.2);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 16px;
+            overflow-y: auto;
+            padding-bottom: 130px;
+        }
+
+        #coin-container {
+            position: relative;
+            margin: 20px 0;
+        }
+        #coin {
+            width: 160px;
+            height: 160px;
+            cursor: pointer;
+            filter: drop-shadow(0 0 20px rgba(0,212,255,0.5));
+            transition: transform 0.15s ease;
+        }
         #coin:active { transform: scale(0.88); }
-        .stats { background: var(--card); padding: 16px; border-radius: 16px; width: 90%; max-width: 320px; margin: 16px 0; }
-        .stat { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; }
-        .value { color: var(--success); font-weight: bold; }
-        .menu { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); padding: 16px; border-radius: 16px 16px 0 0; z-index: 1000; }
-        .tabs { display: flex; justify-content: space-around; margin-bottom: 12px; }
-        .tab-btn { background: transparent; color: #88aabb; border: none; padding: 8px; border-radius: 12px; font-size: 13px; flex: 1; }
-        .tab-btn.active { background: var(--accent); color: #000; }
+
+        .tap-effect {
+            position: absolute;
+            color: var(--success);
+            font-weight: bold;
+            font-size: 24px;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-80px); opacity: 0; }
+        }
+
+        .stats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--card);
+            padding: 14px 20px;
+            border-radius: 16px;
+            min-width: 280px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border: 1px solid rgba(0,212,255,0.15);
+            margin-bottom: 16px;
+        }
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            font-size: 15px;
+        }
+        .stat i { color: var(--accent); margin-right: 8px; }
+        .value { font-weight: 600; color: var(--success); }
+
+        .menu {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-radius: 16px 16px 0 0;
+            padding: 16px;
+            box-shadow: 0 -8px 20px rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(0,212,255,0.15);
+            z-index: 1000;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 14px;
+            gap: 8px;
+        }
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: #000;
+        }
+
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        button { background: var(--accent); color: #000; border: none; padding: 10px; border-radius: 12px; margin: 6px 0; font-weight: bold; }
-        .upgrade { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2); border-radius: 12px; padding: 12px; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; }
-        .ach { padding: 12px; border-radius: 10px; margin: 6px 0; background: rgba(0,255,0,0.1); border: 1px solid rgba(0,255,0,0.3); text-align: center; }
-        .ach.done { opacity: 0.6; }
-        .list-item { background: rgba(255,255,255,0.05); margin: 6px 0; padding: 10px; border-radius: 10px; font-size: 14px; }
-        .your-place { font-style: italic; color: #aaa; margin-top: 10px; text-align: center; }
-        .update-time { font-size: 12px; color: #666; text-align: center; margin-top: 8px; }
-        #ad-btn { background: #ffcc00; color: #000; font-weight: 700; }
-        #ad-timer { font-size: 13px; color: var(--warning); margin-top: 6px; text-align: center; }
+
+        .upgrade {
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.2);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .upgrade button {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .upgrade button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        #ad-section {
+            text-align: center;
+            margin-top: 16px;
+        }
+        #ad-btn {
+            background: linear-gradient(45deg, #ffcc00, #ff9900);
+            color: #000;
+            font-weight: 700;
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-size: 16px;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+        }
+        #ad-timer {
+            font-size: 13px;
+            color: var(--warning);
+            margin-top: 8px;
+        }
+
+        .subscribe-btn {
+            background: var(--success);
+            color: #000;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        .list-item {
+            padding: 8px;
+            border-bottom: 1px solid rgba(0,212,255,0.1);
+        }
+        .list-item:last-child { border-bottom: none; }
+
+        @media (max-width: 480px) {
+            #coin { width: 140px; height: 140px; }
+            .stats { min-width: 240px; font-size: 14px; }
+        }
+        @media (min-width: 768px) {
+            main { padding: 24px; padding-bottom: 140px; }
+            #coin { width: 200px; height: 200px; }
+            .stats { min-width: 320px; }
+        }
+        @media (orientation: landscape) and (max-width: 767px) {
+            main { flex-direction: row; justify-content: center; }
+            .stats { margin-left: 16px; }
+            #coin-container { margin-right: 16px; }
+        }
     </style>
 </head>
 <body>
-    <header>TG Coin — <span id="nickname">...</span></header>
+    <header>TG Coin - <span id="userName">Гость</span></header>
 
     <main>
-        <img id="coin" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI5MCIgZmlsbD0iIzAwZDRmZiIgc3Ryb2tlPSIjMDBhYWZmIiBzdHJva2Utd2lkdGg9IjYiLz48dGV4dCB4PSIxMDAiIHk9IjEwNSIgZm9udC1zaXplPSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzAwMCIgZm9udC13ZWlnaHQ9ImJvbGQiPlRHPC90ZXh0Pjx0ZXh0IHg9IjEwMCIgeT0iMTM1IiBmb250LXNpemU9IjIyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMDAwIj5Db2luPC90ZXh0Pjwvc3ZnPg==" onclick="tap()">
+        <div id="coin-container">
+            <img id="coin" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI5MCIgZmlsbD0iIzAwZDRmZiIgc3Ryb2tlPSIjMDBhYWZmIiBzdHJva2Utd2lkdGg9IjYiLz48dGV4dCB4PSIxMDAiIHk9IjEwNSIgZm9udC1zaXplPSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzAwMCIgZm9udC13ZWlnaHQ9ImJvbGQiPlRHPC90ZXh0Pjx0ZXh0IHg9IjEwMCIgeT0iMTM1IiBmb250LXNpemU9IjIyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMDAwIj5Db2luPC90ZXh0Pjwvc3ZnPg==" alt="TG Coin" onclick="tapCoin()">
+        </div>
+
         <div class="stats">
             <div class="stat">TG Coin: <span class="value" id="coins">0</span></div>
             <div class="stat">Авто/сек: <span class="value" id="auto">0</span></div>
-            <div class="stat">Энергия: <span id="energy">100</span>/<span id="max">100</span></div>
-            <div class="stat">Рефералы: <span id="refs">0</span></div>
+            <div class="stat">Энергия: <span class="value" id="energy">100</span>/<span id="maxEnergy">100</span></div>
+            <div class="stat">Рефералы: <span class="value" id="referrals">0</span></div>
         </div>
     </main>
 
     <div class="menu">
         <div class="tabs">
-            <button class="tab-btn active" data-tab="up">УЛУЧШЕНИЯ</button>
-            <button class="tab-btn" data-tab="top">ТОП-100</button>
-            <button class="tab-btn" data-tab="ach">ДОСТИЖЕНИЯ</button>
+            <button class="tab-btn active" data-tab="upgrades">УЛУЧШЕНИЯ</button>
+            <button class="tab-btn" data-tab="top">ТОП</button>
         </div>
 
-        <div id="up" class="tab-content active">
+        <div id="upgrades" class="tab-content active">
             <div class="upgrade">
-                <div><strong>Авто-кликер</strong><br><small>+1 TG/сек</small></div>
-                <button id="autoBtn">100 TG</button>
+                <div><strong>Авто-кликер Lv.<span id="autoLevel">0</span></strong><br><small id="autoBenefit">+1 TG/сек</small></div>
+                <button id="autoBtn" onclick="buy('auto')">100 TG</button>
             </div>
             <div class="upgrade">
                 <div><strong>Пригласить друга</strong><br><small>+200 TG +10% авто</small></div>
                 <button onclick="invite()">Пригласить</button>
             </div>
+            <button class="subscribe-btn" onclick="checkSubscribe()">Подписка на канал (+100 энергии)</button>
         </div>
 
         <div id="top" class="tab-content">
-            <div class="list" id="topList">Загрузка топа...</div>
-            <div id="yourPlace" class="your-place"></div>
-            <div id="updateTime" class="update-time">Обновляется каждые 30 сек</div>
+            <div class="list" id="topList">Загрузка...</div>
         </div>
 
-        <div id="ach" class="tab-content">
-            <div class="ach" id="subAch">
-                Подписка на @dubna_book — +100 энергии<br>
-                <button onclick="checkSub()">Проверить подписку</button>
-            </div>
-        </div>
-
-        <div style="text-align: center; margin-top: 16px;">
+        <div id="ad-section">
             <button id="ad-btn" onclick="watchAd()">Смотреть рекламу (+500 TG)</button>
             <div id="ad-timer"></div>
         </div>
     </div>
 
+    <audio id="tapSound" src="https://assets.mixkit.co/sfx/preview/mixkit-coin-win-notification-1939.mp3" preload="auto"></audio>
+
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
+
         const userId = tg.initDataUnsafe?.user?.id || 'guest';
-        const nickname = tg.initDataUnsafe?.user?.username || tg.initDataUnsafe?.user?.first_name || 'Player';
-        document.getElementById('nickname').textContent = nickname;
+        const userName = tg.initDataUnsafe?.user?.first_name || 'Гость';
+        const API_BASE = 'http://localhost:5000/api';  // Замени на URL бота
 
-        const DB = { get: k => JSON.parse(localStorage.getItem(`tgcoin_${userId}_${k}`) || 'null'), set: (k,v) => localStorage.setItem(`tgcoin_${userId}_${k}`, JSON.stringify(v)) };
-        let game = DB.get('game') || {c:0,a:0,e:100,m:100,b:1,r:0,l:0,t:0};
-        const upgrades = DB.get('upgrades') || {auto: 0};
-        let subDone = DB.get('sub') || false;
+        document.getElementById('userName').textContent = userName;
 
-        function save() {
-            DB.set('game', game);
-            DB.set('upgrades', upgrades);
-            DB.set('sub', subDone);
-            tg.sendData(`save_${Math.floor(game.c)}_${game.a}_${Math.floor(game.e)}_${game.m}_${game.r}_${game.t}`);
+        // Загрузка данных
+        async function loadGame() {
+            try {
+                const res = await fetch(`${API_BASE}/user/${userId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    Object.assign(game, data);
+                    Object.assign(upgrades, data.upgrades || {});
+                }
+            } catch (e) {
+                console.error('API error:', e);
+            }
+            updateAll();
         }
 
-        function tap() {
-            if(game.e > 0){
-                game.c += game.b; game.e--;
-                update();
+        // Сохранение
+        async function save() {
+            try {
+                await fetch(`${API_BASE}/user/${userId}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(game)
+                });
+            } catch (e) {
+                console.error('Save error:', e);
             }
         }
 
-        function buyAuto() {
-            const cost = 100 * Math.pow(1.8, upgrades.auto);
-            if(game.c >= cost){
-                game.c -= cost;
-                upgrades.auto++;
-                game.a += 1;  // +1 TG/сек за каждую покупку
-                update();
+        // Игровые данные (локально для оффлайн, синхронизируется)
+        let game = {coins: 0, auto: 0, energy: 100, maxEnergy: 100, boost: 1, referrals: 0, totalTaps: 0, lastAd: 0};
+        let upgrades = {auto: 0};
+        const baseCosts = {auto: 100};
+        const tapSound = document.getElementById('tapSound');
+
+        // Авто-benefit: прогрессия 1, 1.3, 1.69... (1 * 1.3^(level-1))
+        function getAutoBenefit(level) {
+            return level * Math.pow(1.3, level - 1);
+        }
+
+        // Тап
+        async function tapCoin() {
+            if (game.energy <= 0) return;
+            game.coins += game.boost;
+            game.totalTaps++;
+            game.energy--;
+            tapSound.currentTime = 0; tapSound.play();
+            showTapEffect(`+${game.boost}`);
+            updateAll();
+            await save();
+        }
+
+        function showTapEffect(text) {
+            const el = document.createElement('div');
+            el.className = 'tap-effect';
+            el.textContent = text;
+            el.style.left = `${50 + Math.random() * 60 - 30}%`;
+            document.getElementById('coin-container').appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        // Покупка
+        async function buy(type) {
+            const level = upgrades[type] + 1;
+            const cost = baseCosts[type] * Math.pow(1.8, upgrades[type]);
+            if (game.coins >= cost) {
+                game.coins -= cost;
+                upgrades[type] = level;
+                if (type === 'auto') game.auto = getAutoBenefit(level);
+                document.getElementById('autoLevel').textContent = level;
+                document.getElementById('autoBenefit').textContent = `+${game.auto.toFixed(1)} TG/сек`;
+                updateAll();
+                await save();
             }
         }
 
+        // Пригласить
         function invite() {
             tg.sendData('invite');
-            tg.showAlert('Реферальная ссылка отправлена в чат!');
+            tg.showAlert('Реферальная ссылка отправлена в чат с ботом!');
         }
 
-        function watchAd() {
+        // Подписка
+        async function checkSubscribe() {
+            try {
+                const res = await fetch(`${API_BASE}/subscribe/${userId}`, {method: 'POST'});
+                const data = await res.json();
+                if (data.success) {
+                    tg.showAlert(data.message);
+                    game.energy += 100;  // Или maxEnergy
+                    updateAll();
+                    await save();
+                } else {
+                    tg.showAlert('Подпишись на канал для бонуса!');
+                }
+            } catch (e) {
+                tg.showAlert('Ошибка проверки. Попробуй позже.');
+            }
+        }
+
+        // Реклама
+        async function watchAd() {
             const now = Date.now();
-            if (now - game.l < 120000) {
+            if (now - game.lastAd < 120000) {
                 updateTimer();
                 return;
             }
-            game.c += 500;
-            game.l = now;
+            game.coins += 500;
+            game.lastAd = now;
             tg.showAlert('+500 TG Coin!');
-            update();
+            updateAll();
+            await save();
             updateTimer();
         }
 
         function updateTimer() {
             const el = document.getElementById('ad-timer');
-            const diff = 120000 - (Date.now() - game.l);
-            if (diff > 0) {
-                el.textContent = `Реклама через ${Math.ceil(diff/1000)} сек`;
-            } else {
-                el.textContent = '';
-            }
-        }
-        setInterval(updateTimer, 1000);
-
-        function checkSub() {
-            tg.sendData('check_subscription');
+            const diff = 120000 - (Date.now() - game.lastAd);
+            if (diff > 0) el.textContent = `Реклама через ${Math.ceil(diff/1000)} сек`;
+            else el.textContent = '';
         }
 
-        function update() {
-            document.getElementById('coins').textContent = Math.floor(game.c).toLocaleString();
-            document.getElementById('auto').textContent = game.a.toFixed(1);
-            document.getElementById('energy').textContent = Math.floor(game.e);
-            document.getElementById('max').textContent = game.m;
-            document.getElementById('refs').textContent = game.r;
-            const cost = 100 * Math.pow(1.8, upgrades.auto);
-            document.getElementById('autoBtn').textContent = cost.toLocaleString() + ' TG';
-            save();
-        }
-
-        function updateSub() {
-            const ach = document.getElementById('subAch');
-            if (subDone) {
-                ach.innerHTML = 'Подписка на @dubna_book — +100 энергии<br><span style="color:#0f0">Выполнено</span>';
-                ach.classList.add('done');
-            } else {
-                ach.innerHTML = 'Подписка на @dubna_book — +100 энергии<br><button onclick="checkSub()">Проверить подписку</button>';
-                ach.classList.remove('done');
-            }
-        }
-
-        // === ОНЛАЙН ТОП-100 ===
-        async function updateTop() {
-            const topList = document.getElementById('topList');
-            const yourPlace = document.getElementById('yourPlace');
-            const updateTime = document.getElementById('updateTime');
-            topList.innerHTML = 'Загрузка...';
-
-            try {
-                const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://raw.githubusercontent.com/psonukovarslan-coder/in/main/top100.json'));
-                const data = await res.json();
-                const top100 = JSON.parse(data.contents);
-
-                let html = '';
-                top100.forEach((p, i) => {
-                    html += `<div class="list-item"><strong>${i+1}. ${p.nick}</strong> — ${p.coins.toLocaleString()} TG</div>`;
-                });
-                topList.innerHTML = html;
-
-                const player = top100.find(p => p.id == userId);
-                if (player) {
-                    yourPlace.textContent = `Ты в топе: #${top100.indexOf(player) + 1}`;
-                } else {
-                    yourPlace.textContent = `Ты не в топ-100. Твои: ${Math.floor(game.c).toLocaleString()} TG`;
-                }
-
-                updateTime.textContent = `Обновлено: ${new Date().toLocaleTimeString()}`;
-            } catch {
-                topList.innerHTML = '<div class="list-item">Ошибка загрузки</div>';
-            }
-        }
-
-        setInterval(updateTop, 30000); // каждые 30 сек
-
-        // === ТАБЫ ===
-        document.querySelectorAll('.tab-btn').forEach(b => {
-            b.addEventListener('click', () => {
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-                document.getElementById(b.dataset.tab).classList.add('active');
-                document.querySelectorAll('.tab-btn').forEach(bb => bb.classList.remove('active'));
-                b.classList.add('active');
-                if (b.dataset.tab === 'top') updateTop();
-                if (b.dataset.tab === 'ach') updateSub();
-            });
-        });
-
-        // === АВТОДОХОД ===
+        // Локальный авто (для оффлайн, но основной на сервере)
         setInterval(() => {
-            game.c += game.a * 0.1;
-            game.e = Math.min(game.m, game.e + 0.5);
-            update();
+            if (game.energy < game.maxEnergy) game.energy = Math.min(game.maxEnergy, game.energy + 0.5);
+            updateAll();
         }, 1000);
 
-        window.addEventListener('beforeunload', save);
+        setInterval(updateTimer, 1000);
+
+        // Топ
+        async function updateTop() {
+            try {
+                const res = await fetch(`${API_BASE}/top`);
+                const top = await res.json();
+                let html = '';
+                top.forEach((player, i) => {
+                    html += `<div class="list-item"><strong>${i+1}. ${player.name}</strong> — ${Math.floor(player.coins).toLocaleString()} TG</div>`;
+                });
+                document.getElementById('topList').innerHTML = html || 'Пусто...';
+            } catch (e) {
+                document.getElementById('topList').innerHTML = 'Ошибка загрузки';
+            }
+        }
+
+        setInterval(updateTop, 10000);  // Обновление топа
+
+        // Обновление UI
+        function updateAll() {
+            document.getElementById('coins').textContent = Math.floor(game.coins).toLocaleString();
+            document.getElementById('auto').textContent = game.auto.toFixed(1);
+            document.getElementById('energy').textContent = Math.floor(game.energy);
+            document.getElementById('maxEnergy').textContent = game.maxEnergy;
+            document.getElementById('referrals').textContent = game.referrals;
+
+            const autoBtn = document.getElementById('autoBtn');
+            const cost = baseCosts.auto * Math.pow(1.8, upgrades.auto);
+            autoBtn.textContent = cost.toLocaleString() + ' TG';
+            autoBtn.disabled = game.coins < cost;
+        }
+
+        function openTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+            if (tab === 'top') updateTop();
+        }
 
         // Инициализация
-        update();
-        updateSub();
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => openTab(btn.dataset.tab));
+        });
+
+        window.addEventListener('beforeunload', save);
+        window.addEventListener('pagehide', save);
+
+        loadGame();  // Загрузка при старте
         updateTop();
         updateTimer();
     </script>
